@@ -175,9 +175,9 @@ boto3==1.40.61 \
     --hash=sha256:6b9c57b2a922b5d8c17766e29ed792586a818098efe84def27c8f582b33f898c \
     --hash=sha256:d6c56277251adf6c2bdd25249feae625abe4966831676689ff23b4694dea5b12
     # via aiobotocore
-botocore==1.40.61 \
-    --hash=sha256:17ebae412692fd4824f99cde0f08d50126dc97954008e5ba2b522eb049238aa7 \
-    --hash=sha256:a2487ad69b090f9cccd64cf07c7021cd80ee9c0655ad974f87045b02f3ef52cd
+botocore==1.43.103 \
+    --hash=sha256:6a6a561a6de43845ae42bc7ff7e2c798742bfa277f5215398f9c15ed9b1bd67c \
+    --hash=sha256:8c7f220e09f3b7ec99c59c716aa66cf6f5b2b57fd8731544054f3778aa744c6a
     # via
     #   aiobotocore
     #   boto3
