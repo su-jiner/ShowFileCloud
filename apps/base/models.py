@@ -1,0 +1,102 @@
+# @Time    : 2023/8/13 20:43
+# @Author  : Lan
+# @File    : models.py
+# @Software: PyCharm
+
+from typing import Any
+
+from tortoise.models import Model
+from tortoise.contrib.pydantic import pydantic_model_creator
+
+from tortoise import fields, models
+from core.utils import get_now
+
+
+class FileCodes(models.Model):
+    id = fields.IntField(pk=True)
+    code = fields.CharField(max_length=255, unique=True, index=True)
+    prefix = fields.CharField(max_length=255, default="")
+    suffix = fields.CharField(max_length=255, default="")
+    uuid_file_name = fields.CharField(max_length=255, null=True)
+    file_path = fields.CharField(max_length=255, null=True)
+    size = fields.BigIntField(default=0)
+    text = fields.TextField(null=True)
+    expired_at = fields.DatetimeField(null=True)
+    # -1 = 时间式（看 expired_at），<=0 的 0 = 次数耗尽。默认 -1 而非 0：
+    # 0 语义是"次数已用完即过期"，忘传该字段的创建路径会得到立即过期的记录。
+    expired_count = fields.IntField(default=-1)
+    used_count = fields.IntField(default=0)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    file_hash = fields.CharField(max_length=64, null=True)
+    is_chunked = fields.BooleanField(default=False)
+    upload_id = fields.CharField(max_length=36, null=True)
+
+    async def is_expired(self):
+        if self.expired_at is None:
+            return False
+        if self.expired_at and self.expired_count < 0:
+            return self.expired_at < await get_now()
+        return self.expired_count <= 0
+
+    async def get_file_path(self):
+        return f"{self.file_path}/{self.uuid_file_name}"
+
+
+class UploadChunk(models.Model):
+    id = fields.IntField(pk=True)
+    upload_id = fields.CharField(max_length=36, index=True)
+    chunk_index = fields.IntField()
+    chunk_hash = fields.CharField(max_length=64)
+    total_chunks = fields.IntField()
+    file_size = fields.BigIntField()
+    chunk_size = fields.IntField()
+    file_name = fields.CharField(max_length=255)
+    save_path = fields.CharField(max_length=512, null=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    completed = fields.BooleanField(default=False)
+
+
+class KeyValue(Model):
+    # 与 FileCodes 保持同一风格：类属性不写值注解（等号右侧的 Field 描述符
+    # 才是类级真身；实例级由 tortoise 运行时给出对应 Python 值）
+    id = fields.IntField(pk=True)
+    key = fields.CharField(max_length=255, description="键", index=True, unique=True)
+    # JSONField 实际承载 dict/list（如 settings 配置）
+    value: Any = fields.JSONField(description="值", null=True)
+    created_at = fields.DatetimeField(auto_now_add=True, description="创建时间")
+
+
+class PresignUploadSession(models.Model):
+    """预签名上传会话模型"""
+
+    id = fields.IntField(pk=True)
+    upload_id = fields.CharField(max_length=36, unique=True, index=True)
+    file_name = fields.CharField(max_length=255)
+    file_size = fields.BigIntField()
+    save_path = fields.CharField(max_length=512)
+    mode = fields.CharField(max_length=10)  # "direct" 或 "proxy"
+    expire_value = fields.IntField(default=1)
+    expire_style = fields.CharField(max_length=20, default="day")
+    created_at = fields.DatetimeField(auto_now_add=True)
+    expires_at = fields.DatetimeField()  # 会话过期时间
+
+    async def is_expired(self):
+        """检查会话是否已过期"""
+        return self.expires_at < await get_now()
+
+
+class StorageReservation(models.Model):
+    """尚未写入 FileCodes 的上传容量预留。"""
+
+    id = fields.IntField(pk=True)
+    token = fields.CharField(max_length=64, unique=True, index=True)
+    size = fields.BigIntField()
+    expires_at = fields.DatetimeField(index=True)
+
+
+file_codes_pydantic = pydantic_model_creator(FileCodes, name="FileCodes")
+upload_chunk_pydantic = pydantic_model_creator(UploadChunk, name="UploadChunk")
+key_value_pydantic = pydantic_model_creator(KeyValue, name="KeyValue")
+presign_upload_session_pydantic = pydantic_model_creator(
+    PresignUploadSession, name="PresignUploadSession"
+)

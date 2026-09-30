@@ -1,0 +1,119 @@
+# Changelog
+
+## [2.7.1](https://github.com/su-jiner/ShowFileCloud/compare/v2.7.0...v2.7.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* keep Docker as root, close s3_hostname SSRF, unbreak 404 tests ([031d300](https://github.com/su-jiner/ShowFileCloud/commit/031d300caea99117e82b3bddc3e5d0532cf3efa6))
+
+## [2.7.0](https://github.com/su-jiner/ShowFileCloud/compare/v2.6.1...v2.7.0) (2026-09-16)
+
+
+### Features
+
+* mint extract codes from data/local without re-upload ([93a30a2](https://github.com/su-jiner/ShowFileCloud/commit/93a30a257cc5b0ee23a374521e1e12602c3959da))
+
+## [2.6.1](https://github.com/su-jiner/ShowFileCloud/compare/v2.6.0...v2.6.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* don't let a legacy background value block settings saves ([eb2db8f](https://github.com/su-jiner/ShowFileCloud/commit/eb2db8f507e3198e0ae45b976bdd90eab2f7d1ed))
+* 存量 background 值不再阻塞后台设置保存（[#514](https://github.com/su-jiner/ShowFileCloud/issues/514) 升级回归） ([0d82fbe](https://github.com/su-jiner/ShowFileCloud/commit/0d82fbe26ad06ca77af7b2b5aa05f514e8362295))
+
+## [2.6.0](https://github.com/su-jiner/ShowFileCloud/compare/v2.5.6...v2.6.0) (2026-09-14)
+
+
+### Features
+
+* declare missing config keys (opendal_scheme, chunk_expire_hours) and add config schema guard ([c5d525d](https://github.com/su-jiner/ShowFileCloud/commit/c5d525df08bb9534d1efb3ab5ff9357b52240fe9))
+* rename all config keys to snake_case with DB migration 007 ([5121db6](https://github.com/su-jiner/ShowFileCloud/commit/5121db6edcdac57318d058e28d7249efb9ea4d03))
+* upgrade password hashing to memory-hard scrypt with transparent rehash ([443cfe7](https://github.com/su-jiner/ShowFileCloud/commit/443cfe7472693bb954845f4cc4ac77e3abfcbd23))
+
+
+### Bug Fixes
+
+* FileCodes.expired_count defaults to -1 (time-based) instead of instantly-expired 0 (D4) ([3c93718](https://github.com/su-jiner/ShowFileCloud/commit/3c93718d4b2f3a8e93978c7eb7a4a3b2553b0855))
+* save_file accepts plain binary streams; repair admin local file share (D2) ([bb95017](https://github.com/su-jiner/ShowFileCloud/commit/bb95017aa398e80e5eca512aa9a330aaeeceb364))
+* serialize KeyValue JSON read-modify-write sections behind a process lock (D5) ([0038636](https://github.com/su-jiner/ShowFileCloud/commit/0038636a2a5fc8e73f944c38789dce8de0354c3a))
+* snake_case the public config contract (D7 follow-up) ([800bac0](https://github.com/su-jiner/ShowFileCloud/commit/800bac01285dd6eb827e28460996997dbb80e2c3))
+* validate background config as http(s) URL to close CSS quote-breakout in 2023 theme ([4cab625](https://github.com/su-jiner/ShowFileCloud/commit/4cab625d5ab2fe5921f8f621ebe015623afb6fb8))
+
+
+### Performance Improvements
+
+* cache settings refresh behind a 2s TTL, force refresh on write paths (D6) ([61d72ab](https://github.com/su-jiner/ShowFileCloud/commit/61d72ab6ccba5df121945ef825de2967c45888b4))
+* dashboard counters and storage quota use SQL aggregation (D3) ([baecebd](https://github.com/su-jiner/ShowFileCloud/commit/baecebd81efc9677acac29d5335e281d6bb5a252))
+* make is_config_initialized cheap — no scrypt on the per-request probe (D1) ([ec424dd](https://github.com/su-jiner/ShowFileCloud/commit/ec424dd9093d94b69ec3a118f321cd1f85c7dd54))
+
+## [2.5.6](https://github.com/su-jiner/ShowFileCloud/compare/v2.5.5...v2.5.6) (2026-09-01)
+
+
+### Bug Fixes
+
+* **logging:** reduce production log noise ([5537f56](https://github.com/su-jiner/ShowFileCloud/commit/5537f56b884a15eda015665c67c3f8469e4e9d89))
+
+## [2.5.5](https://github.com/su-jiner/ShowFileCloud/compare/v2.5.4...v2.5.5) (2026-08-29)
+
+
+### Bug Fixes
+
+* **chunk-upload:** persist sanitized filenames ([da1dd06](https://github.com/su-jiner/ShowFileCloud/commit/da1dd066551cc7cc9a631a0c982b5675bd4b1967))
+* harden chunk upload filename metadata ([5a7195c](https://github.com/su-jiner/ShowFileCloud/commit/5a7195c5c7d1028500b0e363c6b47130d260e11c))
+* sanitize chunk upload file_name to prevent path traversal ([cebac32](https://github.com/su-jiner/ShowFileCloud/commit/cebac32145f948bfca7c44c663a0bcdcd9c56830))
+
+## [2.5.4](https://github.com/su-jiner/ShowFileCloud/compare/v2.5.3...v2.5.4) (2026-07-23)
+
+
+### Bug Fixes
+
+* run Docker as root for volume compatibility ([fbcd4a5](https://github.com/su-jiner/ShowFileCloud/commit/fbcd4a5b2b788cdfc8e86d920f9c5a7299dc839a))
+* run Docker image as root for data volume compatibility ([fc0cbeb](https://github.com/su-jiner/ShowFileCloud/commit/fc0cbeb4f0c7485d2e7abc0501a5fd9b1456cc22))
+
+## [2.5.3](https://github.com/su-jiner/ShowFileCloud/compare/v2.5.2...v2.5.3) (2026-07-23)
+
+
+### Bug Fixes
+
+* add magic-byte checks, login rate limits, and non-root Docker ([eda0a31](https://github.com/su-jiner/ShowFileCloud/commit/eda0a3127ab562b6a2cf828c0df4a93933c44526))
+* magic-byte file checks, admin login rate limit, non-root Docker ([0ee2f04](https://github.com/su-jiner/ShowFileCloud/commit/0ee2f046dd057fecceaee1059d72d67de3038f19))
+
+## [2.5.2](https://github.com/su-jiner/ShowFileCloud/compare/v2.5.1...v2.5.2) (2026-07-23)
+
+
+### Bug Fixes
+
+* harden share expiry, download token, quota SQL, and CORS ([ae77026](https://github.com/su-jiner/ShowFileCloud/commit/ae7702603a99dc77b9b48e78746058b2a74b0bf5))
+* harden share expiry, download token, quota SQL, and CORS ([a41693f](https://github.com/su-jiner/ShowFileCloud/commit/a41693f90ded0234e0883c399254319bef04924a))
+
+## [2.5.1](https://github.com/su-jiner/ShowFileCloud/compare/v2.5.0...v2.5.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* patch CVE dependencies and path traversal risks ([00f3abd](https://github.com/su-jiner/ShowFileCloud/commit/00f3abd3b20fe2344e4dbf8d53714773e23a1050))
+
+## [2.5.0](https://github.com/su-jiner/ShowFileCloud/compare/v2.4.0...v2.5.0) (2026-07-11)
+
+
+### Features
+
+* add global storage capacity limit ([818dd47](https://github.com/su-jiner/ShowFileCloud/commit/818dd47b2a4136d4b0d68b2484ac2d01a7ae6a3c))
+* automate version releases ([ee8f908](https://github.com/su-jiner/ShowFileCloud/commit/ee8f9082ab59418a4a7721a05fc358215230981f))
+* configure admin session lifetime ([#484](https://github.com/su-jiner/ShowFileCloud/issues/484)) ([93ff291](https://github.com/su-jiner/ShowFileCloud/commit/93ff291366aaac9d04c5259d3ecf01b20aed3fd0))
+
+
+### Bug Fixes
+
+* build frontend on native Docker platform ([2c51384](https://github.com/su-jiner/ShowFileCloud/commit/2c51384c80a9ff3f4eb98eb876759b8949dfae89))
+* harden automated release workflow ([46883c9](https://github.com/su-jiner/ShowFileCloud/commit/46883c90ff52894631fe53bbd9b9c4100a7b27f1))
+* harden share retrieval and admin visibility ([#482](https://github.com/su-jiner/ShowFileCloud/issues/482), [#480](https://github.com/su-jiner/ShowFileCloud/issues/480)) ([8d7d856](https://github.com/su-jiner/ShowFileCloud/commit/8d7d856c62d73badd0797eb4daec8d2ff10a403a))
+* resolve docs dependency audit warnings ([36300ef](https://github.com/su-jiner/ShowFileCloud/commit/36300ef54ee09081a6cf6a5fe4e69cee7aad0162))
+
+## [Unreleased]
+
+### Added
+
+- 增加全局存储容量上限配置，并对普通上传、分片上传、预签名直传和后台文件分享统一执行并发安全的容量预留。
+- 增加存储预留迁移及过期上传清理，失败、取消或过期的上传会释放预留容量。

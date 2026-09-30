@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "component": "showfilecloud",
+      "package-name": "showfilecloud",
+      "include-v-in-tag": true,
+      "include-component-in-tag": false,
+      "version-file": "VERSION",
+      "changelog-path": "docs/changelog.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "docs/en/changelog.md"
+        },
+        {
+          "type": "generic",
+          "path": "docker-compose.yml"
+        },
+        {
+          "type": "generic",
+          "path": "readme.md"
+        },
+        {
+          "type": "generic",
+          "path": "readme_en.md"
+        },
+        {
+          "type": "generic",
+          "path": "docs/index.md"
+        },
+        {
+          "type": "generic",
+          "path": "docs/en/index.md"
+        }
+      ]
+    }
+  }
+}

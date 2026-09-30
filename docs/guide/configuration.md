@@ -1,0 +1,213 @@
+# 配置说明
+
+ShowFileCloud 提供了丰富的配置选项。请优先通过管理面板修改，避免直接编辑数据库造成类型错误或安全配置失效。
+
+## 配置方式
+
+ShowFileCloud 支持两种配置方式：
+
+1. **管理面板配置**（推荐）：访问 `/admin` 进入管理面板，在设置页面修改配置
+2. **数据库配置**：配置存储在 `data/showfilecloud.db` 数据库中
+
+::: tip 提示
+首次启动时，系统会使用 `core/settings.py` 中的默认配置。修改后的配置会保存到数据库中。
+:::
+
+## 基础设置
+
+### 站点信息
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `name` | string | `文件快递柜 - ShowFileCloud` | 站点名称，显示在页面标题和导航栏 |
+| `description` | string | `开箱即用的文件快传系统` | 站点描述，用于 SEO |
+| `keywords` | string | `ShowFileCloud, 文件快递柜...` | 站点关键词，用于 SEO |
+| `server_host` | string | `0.0.0.0` | 服务监听地址 |
+| `server_port` | int | `12345` | 服务监听端口 |
+| `server_workers` | int | `1` | 工作进程数；SQLite 部署建议保持单进程 |
+
+### 通知设置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `notify_title` | string | `系统通知` | 通知标题 |
+| `notify_content` | string | 欢迎信息 | 通知内容，支持 HTML |
+| `page_explain` | string | 法律声明 | 页面底部说明文字 |
+| `robots_text` | string | `User-agent: *\nDisallow: /` | robots.txt 内容 |
+
+## 上传设置
+
+### 文件上传限制
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `open_upload` | int | `1` | 是否开启上传功能（1=开启，0=关闭） |
+| `upload_size` | int | `10485760` | 单文件最大上传大小（字节），默认 10MB |
+| `enable_chunk` | int | `0` | 是否启用分片上传（1=启用，0=禁用） |
+| `allowed_file_types` | list | `["*"]` | 允许上传的扩展名；`*` 表示不限制 |
+
+::: warning 注意
+`upload_size` 的单位是字节。10MB = 10 * 1024 * 1024 = 10485760 字节
+:::
+
+### 上传频率限制
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `upload_minute` | int | `1` | 上传限制的时间窗口（分钟） |
+| `upload_count` | int | `10` | 在时间窗口内允许的最大上传次数 |
+
+例如：默认配置表示每 1 分钟内最多允许上传 10 次。
+
+### 文件过期设置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `expire_style` | list | `["day","hour","minute","forever","count"]` | 可选的过期方式 |
+| `max_save_seconds` | int | `0` | 文件最大保存时间（秒），0 表示不限制 |
+
+过期方式说明：
+- `day` - 按天过期
+- `hour` - 按小时过期
+- `minute` - 按分钟过期
+- `forever` - 永不过期
+- `count` - 按下载次数过期
+
+## 主题设置
+
+### 主题选择
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `themes_select` | string | `themes/2024` | 当前使用的主题 |
+| `themes_choices` | list | 见下方 | 可用主题列表 |
+
+默认可用主题：
+```json
+[
+  {
+    "name": "2023",
+    "key": "themes/2023",
+    "author": "Lan",
+    "version": "1.0"
+  },
+  {
+    "name": "2024",
+    "key": "themes/2024",
+    "author": "Lan",
+    "version": "1.0"
+  }
+]
+```
+
+### 界面样式
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `opacity` | float | `0.9` | 界面透明度（0-1） |
+| `background` | string | `""` | 自定义背景图片 URL，为空则使用默认背景 |
+
+## 管理员设置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `admin_token` | string | 初始化页面设置 | 管理员登录密码（哈希存储） |
+| `show_admin_addr` | int | `0` | 是否在首页显示管理入口（1=显示，0=隐藏） |
+| `admin_session_expire` | int | `2592000` | 管理会话有效期（秒），默认 30 天 |
+
+::: danger 安全警告
+未初始化时会自动显示初始化页面。生产环境请在服务对外开放前完成初始化。
+:::
+
+## 安全设置
+
+### 错误次数限制
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `error_minute` | int | `1` | 错误限制的时间窗口（分钟） |
+| `error_count` | int | `10` | 在时间窗口内允许的最大错误次数 |
+| `trusted_proxies` | list | `[]` | 可信反向代理 IP；用于安全解析客户端地址 |
+
+此设置用于防止暴力破解提取码。
+
+## 存储设置
+
+### 存储类型
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `file_storage` | string | `local` | 存储后端类型 |
+| `storage_path` | string | `""` | 自定义存储路径 |
+| `storage_limit` | int | `0` | 总存储配额（字节），0 表示不限制 |
+
+支持的存储类型：
+- `local` - 本地存储
+- `s3` - S3 兼容存储（AWS S3、阿里云 OSS、MinIO 等）
+- `onedrive` - OneDrive 存储
+- `webdav` - WebDAV 存储
+- `opendal` - OpenDAL 存储
+
+详细的存储配置请参考 [存储配置](/guide/storage)。
+
+## 配置示例
+
+### 示例 1：小型个人使用
+
+适合个人或小团队使用，限制较宽松：
+
+```python
+{
+    "name": "我的文件分享",
+    "upload_size": 52428800,        # 50MB
+    "upload_minute": 5,             # 5分钟
+    "upload_count": 20,             # 最多20次
+    "expire_style": ["day", "hour", "forever"],
+    "show_admin_addr": 1
+}
+```
+
+### 示例 2：公开服务
+
+适合公开服务，需要更严格的限制：
+
+```python
+{
+    "name": "公共文件快递柜",
+    "upload_size": 10485760,        # 10MB
+    "upload_minute": 1,             # 1分钟
+    "upload_count": 5,              # 最多5次
+    "error_minute": 5,              # 5分钟
+    "error_count": 3,               # 最多3次错误
+    "expire_style": ["hour", "minute", "count"],
+    "max_save_seconds": 86400,     # 最长保存1天
+    "show_admin_addr": 0
+}
+```
+
+### 示例 3：企业内部使用
+
+适合企业内部使用，支持大文件和分片上传：
+
+```python
+{
+    "name": "企业文件中转站",
+    "upload_size": 1073741824,      # 1GB
+    "enable_chunk": 1,              # 启用分片上传
+    "upload_minute": 10,            # 10分钟
+    "upload_count": 100,            # 最多100次
+    "expire_style": ["day", "forever"],
+    "file_storage": "s3",          # 使用S3存储
+    "show_admin_addr": 1
+}
+```
+
+::: warning 配置示例
+以上字典仅用于展示配置值组合，不是可直接编辑的配置文件。管理员密码请在初始化页面或管理面板中设置。
+:::
+
+## 下一步
+
+- [存储配置](/guide/storage) - 了解如何配置不同的存储后端
+- [安全设置](/guide/security) - 了解如何增强系统安全性
+- [文件分享](/guide/share) - 了解文件分享功能

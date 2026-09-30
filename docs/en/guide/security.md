@@ -1,0 +1,321 @@
+# Security Settings
+
+ShowFileCloud provides multiple layers of security mechanisms to protect your file sharing service. This document explains how to properly configure security options to ensure secure system operation.
+
+## Admin Password
+
+### First-Run Setup
+
+::: danger Important Security Warning
+ShowFileCloud does not ship with a default admin password. Open the site in your browser on first run and set the admin password on the setup page.
+:::
+
+Change the admin password through the admin panel:
+
+1. Access `/admin` to enter the admin panel
+2. Log in with the current password
+3. Go to the "System Settings" page
+4. Find the `admin_token` configuration item
+5. Enter a new secure password and save
+
+`admin_token` is stored as a password hash. Do not write a plaintext password to the database, or admin login will stop working.
+
+### Password Security Recommendations
+
+- Use a strong password with at least 16 characters
+- Include uppercase and lowercase letters, numbers, and special characters
+- Avoid common words or personal information
+- Change password regularly
+
+```python
+# Recommended password format example
+"admin_token": "Xk9#mP2$vL5@nQ8&wR3"
+```
+
+### Hide Admin Entry
+
+By default, the admin panel entry is hidden. You can control whether to show the admin entry on the homepage via the `show_admin_addr` configuration:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `show_admin_addr` | int | `0` | Show admin entry (1=show, 0=hide) |
+
+::: tip Recommendation
+For public services, it's recommended to keep `show_admin_addr` at `0` and access the admin panel directly via the `/admin` path.
+:::
+
+## IP Rate Limiting
+
+ShowFileCloud has built-in IP-based rate limiting mechanisms to effectively prevent abuse and attacks.
+
+### Upload Rate Limiting
+
+Limit the number of uploads from a single IP within a specified time:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `upload_minute` | int | `1` | Upload limit time window (minutes) |
+| `upload_count` | int | `10` | Maximum uploads allowed within the time window |
+
+**How it works:**
+- System records upload requests from each IP
+- When an IP's upload count reaches `upload_count` within `upload_minute` minutes
+- Subsequent upload requests from that IP will be rejected with HTTP 423 error
+- Counter resets after the time window expires
+
+**Configuration examples:**
+
+```python
+# Relaxed configuration: Max 20 uploads in 5 minutes
+{
+    "upload_minute": 5,
+    "upload_count": 20
+}
+
+# Strict configuration: Max 3 uploads in 1 minute
+{
+    "upload_minute": 1,
+    "upload_count": 3
+}
+```
+
+
+### Error Rate Limiting
+
+Limit the number of error attempts from a single IP to prevent brute-force attacks on extraction codes:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `error_minute` | int | `1` | Error limit time window (minutes) |
+| `error_count` | int | `10` | Maximum errors allowed within the time window |
+
+**How it works:**
+- When a user enters an incorrect extraction code, the system records the error count for that IP
+- When error count reaches `error_count`, that IP will be temporarily locked
+- Lock duration is `error_minute` minutes
+- During lockout, all extraction requests from that IP will be rejected
+
+**Configuration example:**
+
+```python
+# Anti-brute-force configuration: Max 3 errors in 5 minutes
+{
+    "error_minute": 5,
+    "error_count": 3
+}
+```
+
+::: warning Note
+The default allows up to 10 errors per IP each minute. Public services can tighten this limit while accounting for users behind shared network addresses.
+:::
+
+## Upload Restrictions
+
+### File Size Limit
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `upload_size` | int | `10485760` | Maximum single file upload size (bytes), default 10MB |
+| `open_upload` | int | `1` | Enable upload functionality (1=enabled, 0=disabled) |
+
+**Common size conversions:**
+- 10MB = 10 * 1024 * 1024 = `10485760`
+- 50MB = 50 * 1024 * 1024 = `52428800`
+- 100MB = 100 * 1024 * 1024 = `104857600`
+- 1GB = 1024 * 1024 * 1024 = `1073741824`
+
+### File Expiration Settings
+
+Through file expiration mechanisms, you can automatically clean up expired files, reducing storage usage and security risks:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `expire_style` | list | `["day","hour","minute","forever","count"]` | Available expiration methods |
+| `max_save_seconds` | int | `0` | Maximum file retention time (seconds), 0 means no limit |
+
+**Expiration methods explained:**
+- `day` - Expire by days
+- `hour` - Expire by hours
+- `minute` - Expire by minutes
+- `forever` - Never expire (requires alphanumeric extraction code)
+- `count` - Expire by download count
+
+**Security recommendations:**
+
+For public services, it's recommended to:
+1. Remove the `forever` option to avoid permanent file storage
+2. Set `max_save_seconds` to limit maximum retention time
+3. Prefer using `count` method for automatic deletion after download
+
+```python
+# Recommended configuration for public services
+{
+    "expire_style": ["hour", "minute", "count"],
+    "max_save_seconds": 86400  # Max retention 1 day
+}
+```
+
+### Disable Upload Functionality
+
+In some cases, you may need to temporarily disable upload functionality:
+
+```python
+{
+    "open_upload": 0  # Disable upload functionality
+}
+```
+
+## Reverse Proxy Security Configuration
+
+In production environments, Nginx or other reverse proxy servers are typically used. Here are security configuration recommendations:
+
+### Nginx Configuration Example
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    # Force HTTPS redirect
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+    
+    # SSL certificate configuration
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_prefer_server_ciphers on;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    
+    # Limit request body size (match upload_size configuration)
+    client_max_body_size 100M;
+    
+    # Pass real IP
+    location / {
+        proxy_pass http://127.0.0.1:12345;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Static resource caching
+    location /assets {
+        proxy_pass http://127.0.0.1:12345;
+        proxy_cache_valid 200 7d;
+        add_header Cache-Control "public, max-age=604800";
+    }
+}
+```
+
+### Key Security Configuration Notes
+
+**1. Pass Real IP**
+
+ShowFileCloud's IP limiting functionality depends on obtaining the client's real IP. The system obtains IP in the following order:
+1. `X-Real-IP` request header
+2. `X-Forwarded-For` request header
+3. Direct client connection IP
+
+Ensure the reverse proxy correctly sets these headers:
+
+```nginx
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+```
+
+**2. Request Body Size Limit**
+
+Nginx's `client_max_body_size` should match or be slightly larger than ShowFileCloud's `upload_size` configuration:
+
+```nginx
+client_max_body_size 100M;  # Allow max 100MB uploads
+```
+
+**3. HTTPS Encryption**
+
+It's strongly recommended to enable HTTPS in production environments:
+- Protect uploaded file content
+- Protect admin login credentials
+- Prevent man-in-the-middle attacks
+
+### Caddy Configuration Example
+
+```nginx
+your-domain.com {
+    reverse_proxy localhost:12345
+    
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+}
+```
+
+## Security Checklist
+
+Before deploying ShowFileCloud, confirm the following security configurations:
+
+- [ ] Completed first-run setup and set the admin password `admin_token`
+- [ ] Hidden admin entry `show_admin_addr: 0`
+- [ ] Configured appropriate upload rate limiting
+- [ ] Configured error rate limiting to prevent brute-force attacks
+- [ ] Set reasonable file size limits
+- [ ] Configured file expiration policy
+- [ ] Enabled HTTPS encryption
+- [ ] Reverse proxy correctly passes real IP
+- [ ] Set security response headers
+
+## Recommended Security Configurations
+
+### Public Service Configuration
+
+```python
+{
+    "admin_token": "your-very-secure-password",
+    "show_admin_addr": 0,
+    "upload_size": 10485760,           # 10MB
+    "upload_minute": 1,
+    "upload_count": 5,
+    "error_minute": 5,
+    "error_count": 3,
+    "expire_style": ["hour", "minute", "count"],
+    "max_save_seconds": 86400,        # Max 1 day
+    "open_upload": 1
+}
+```
+
+### Internal Service Configuration
+
+```python
+{
+    "admin_token": "internal-secure-password",
+    "show_admin_addr": 1,
+    "upload_size": 104857600,          # 100MB
+    "upload_minute": 5,
+    "upload_count": 50,
+    "error_minute": 1,
+    "error_count": 5,
+    "expire_style": ["day", "hour", "forever"],
+    "max_save_seconds": 0,            # No limit
+    "open_upload": 1
+}
+```
+
+## Next Steps
+
+- [Configuration Guide](/en/guide/configuration) - Learn about all configuration options
+- [Storage Configuration](/en/guide/storage) - Configure secure storage backends
+- [File Sharing](/en/guide/share) - Learn about file sharing features
